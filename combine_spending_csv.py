@@ -6,18 +6,28 @@ def parse_csv(file_path, month):
     data = pd.read_csv(file_path, delimiter=';', header=None, names=['Kategorie', 'Value', 'Currency'])
     data = data.dropna(how='all')  # Remove rows where all elements are NaN
     
+    # Ensure the file contains data for the whole month
+    date_range = data.iloc[0, 1]
+    if pd.isna(date_range) or month not in date_range:
+        raise ValueError(f"File {file_path} does not contain data for the entire month: {month}")
+    
     # Create a new DataFrame to store parsed data
     parsed_data = pd.DataFrame(columns=['Category', month])
     
     # Extract data for each category
     category = None
     for index, row in data.iterrows():
+        if index == 0:
+            continue  # Skip the date range row
         if pd.notna(row['Kategorie']) and pd.isna(row['Value']):
             category = row['Kategorie'].strip()
         elif pd.notna(row['Kategorie']) and pd.notna(row['Value']):
             subcategory = row['Kategorie'].strip()
             amount = row['Value'].replace(',', '.').strip()
-            amount = float(amount) if amount else 0.0
+            try:
+                amount = float(amount) if amount else 0.0
+            except ValueError:
+                continue  # Skip rows with non-numeric values in the 'Value' column
             if category:
                 full_category = f"{category} - {subcategory}"
                 parsed_data = pd.concat([parsed_data, pd.DataFrame({'Category': [full_category], month: [amount]})])
@@ -40,9 +50,13 @@ def combine_csv_files(directory, year):
         file_path = os.path.join(directory, month_filename)
         if os.path.exists(file_path):
             print(f"Processing file: {file_path}")
-            monthly_data = parse_csv(file_path, month)
-            print(f"Monthly data for {month}:\n", monthly_data.head())
-            combined_data = pd.merge(combined_data, monthly_data, on='Category', how='outer')
+            try:
+                monthly_data = parse_csv(file_path, month)
+                print(f"Monthly data for {month}:\n", monthly_data.head())
+                combined_data = pd.merge(combined_data, monthly_data, on='Category', how='outer')
+            except ValueError as e:
+                print(e)
+                combined_data[month] = pd.NA
         else:
             print(f"File not found for {month}: Adding empty column.")
             combined_data[month] = pd.NA
