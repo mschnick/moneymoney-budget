@@ -13,7 +13,18 @@ def parse_csv(file_path, month):
     # Ensure the file contains data for the whole month
     date_range = data.iloc[0, 1]
     print(f"Date range in file {file_path}: {date_range}")
-    if pd.isna(date_range) or month not in date_range:
+    
+    # Expected date range format is "DD.MM.YYYY bis DD.MM.YYYY"
+    # Extract the start and end dates from the date range
+    try:
+        start_date, end_date = date_range.split(" bis ")
+        start_month = start_date.split(".")[1]
+        end_month = end_date.split(".")[1]
+    except ValueError:
+        raise ValueError(f"File {file_path} does not contain a valid date range: {date_range}")
+
+    # Validate that the file covers the entire month
+    if not (start_month == month[-2:] and end_month == month[-2:]):
         raise ValueError(f"File {file_path} does not contain data for the entire month: {month}")
 
     # Create a new DataFrame to store parsed data
