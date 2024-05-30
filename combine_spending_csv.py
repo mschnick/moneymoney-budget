@@ -1,4 +1,5 @@
 import os
+import sys
 import pandas as pd
 
 def parse_csv(file_path, month):
@@ -28,6 +29,11 @@ def parse_csv(file_path, month):
 def combine_csv_files(directory, year):
     combined_data = pd.DataFrame(columns=['Category'])
     months = [f"{year}-{str(month).zfill(2)}" for month in range(1, 13)]
+
+    # Print the contents of the directory to verify the files are there
+    print(f"Searching for files in directory: {os.path.abspath(directory)}")
+    print(f"Contents of directory {directory}:")
+    print(os.listdir(directory))
     
     for month in months:
         month_filename = f"Kategorien-{month}.csv"
@@ -52,7 +58,27 @@ def main(directory, year):
     combined_data.to_csv(output_filename, index=False, sep=';')
     print(f"Combined data saved to {output_filename}")
 
+def print_help():
+    print("Usage: python combine_spending_csv.py [OPTIONS]")
+    print("Options:")
+    print("  --directory DIR   Specify the directory containing the CSV files")
+    print("  --year YEAR       Specify the year to process")
+    print("  --help            Show this help message and exit")
+
 if __name__ == "__main__":
-    directory = 'path_to_your_csv_files_directory'  # Replace with the path to your directory containing CSV files
-    year = '2023'  # Replace with the desired year
+    import argparse
+
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--directory', type=str, default='.', help='Directory containing the CSV files')
+    parser.add_argument('--year', type=str, required=True, help='Year to process')
+    parser.add_argument('--help', action='store_true', help='Show this help message and exit')
+    args = parser.parse_args()
+
+    if args.help:
+        print_help()
+        sys.exit(0)
+
+    directory = args.directory
+    year = args.year
+
     main(directory, year)
