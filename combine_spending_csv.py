@@ -5,12 +5,17 @@ import pandas as pd
 def parse_csv(file_path, month):
     data = pd.read_csv(file_path, delimiter=';', header=None, names=['Kategorie', 'Value', 'Currency'])
     data = data.dropna(how='all')  # Remove rows where all elements are NaN
-    
+
+    # Debugging: Print the first few rows of the data to understand its structure
+    print(f"First few rows of {file_path}:")
+    print(data.head())
+
     # Ensure the file contains data for the whole month
     date_range = data.iloc[0, 1]
+    print(f"Date range in file {file_path}: {date_range}")
     if pd.isna(date_range) or month not in date_range:
         raise ValueError(f"File {file_path} does not contain data for the entire month: {month}")
-    
+
     # Create a new DataFrame to store parsed data
     parsed_data = pd.DataFrame(columns=['Category', month])
     
